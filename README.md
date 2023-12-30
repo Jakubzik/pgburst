@@ -22,7 +22,7 @@ etc., and edit these files using the workflow you work best with.
 
 This shows how just the one function is extracted from the example database "dvdrental" whose definition contains the word "sanity" (in a comment):
 
-[Show sanity](pgburst_find.gif)
+![Show sanity](pgburst_find.gif)
 
 ### Keeping watch
 
@@ -30,7 +30,7 @@ This shows how just the one function is extracted from the example database "dvd
 
 Flag ``-w`` starts pgburst so that altered files are executed against the database.
 
-[Show waiting](pgburst_wait.gif)
+![Show waiting](pgburst_wait.gif)
 
 ## Usage
 
@@ -63,7 +63,7 @@ Options:\
 
 Next steps:
 
-[ ] Make connection string configurable (user, host)
-[ ] Add export of types
-[ ] Add export of roles and privileges
-[ ] React to deletion of files (possibly also addition of files?)
+[ ] Make connection string configurable (user, host)\
+[ ] Add export of types\
+[ ] Add export of roles and privileges\
+[ ] React to deletion of files (possibly also addition of files?)\
