@@ -20,12 +20,50 @@ You can
 
 etc., and edit these files using the workflow you work best with.
 
+This shows how just the one function is extracted from the example database "dvdrental" whose definition contains the word "sanity" (in a comment):
+
+[Show sanity](pgburst_find.gif)
+
 ### Keeping watch
 
-``pgburst`` can also *watch* for changes. 
+``pgburst`` can also *watch* the files for changes. 
 
-If you often edit a local copy of the database and then need to play the tested alterations into the production variant, ``pgburst`` contains the ``-w``-flag: ``pgburst`` then watches all extracted files for changes, executes the changes against the database, collects the changes in a dedicated folder (together with _UNDO-files) and produces a little bash-script to execute the files.
+Flag ``-w`` starts pgburst so that altered files are executed against the database.
+
+[Show waiting](pgburst_wait.gif)
 
 ## Usage
 
-## 
+``pgburst [OPTIONS] <DB_NAME> [OBJECTS_FILTER]``
+
+Arguments:\
+  <DB_NAME>
+      Name of the database to connect to
+
+  [OBJECTS_FILTER]...
+      Only export items of the specified type(s) (list item types separated by space) [possible values: function, trigger, view]
+
+Options:\
+  -b, --burst-folder <BURST_FOLDER>
+          Where to store the sql files. (Default is .)
+
+  -s, --schema-filter <SCHEMA_FILTER>
+          Only export items of this schema or list of schemas (option can be used repeatedly to export more than one schema)
+
+  -n, --name-filter <NAME_FILTER>
+          Only export items whose names contain the given text
+
+  -f, --find <FIND>
+          Only export items whose sql respresentation contains the given text
+
+  -w, --watch
+          Watch the burst sql files *for changes* and execute them against the database (default: false). Cancel with C-c when you're done. Watching does not cover deletion or addition of files (yet?)!
+
+## Future
+
+Next steps:
+
+[ ] Make connection string configurable (user, host)
+[ ] Add export of types
+[ ] Add export of roles and privileges
+[ ] React to deletion of files (possibly also addition of files?)
