@@ -1,0 +1,18 @@
+[package]
+name = "pgburst"
+version = "0.1.0"
+edition = "2021"
+description = "A file-based way to edit postgresql databases (procedures, views, triggers) without GUI"
+categories = ["database", "development-tools", "command-line-utilities"]
+keywords = ["postgres", "database", "cli", "sql"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Jakubzik/pgburst"
+homepage = "https://github.com/Jakubzik/pgburst"
+authors = ["Heiko Jakubzik <heiko.jakubzik@shj-online.de>"]
+readme = "README.md"
+
+[dependencies]
+postgres = "0.19.7"
+notify = "6.1.1"
+clap = { version = "4.4.11", features = ["derive"] }
+colorize = "0.1.0"
