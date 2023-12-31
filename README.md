@@ -10,6 +10,12 @@ While there are a number of excellent GUIs for editing postgres databases, they 
 
 ``pgburst`` extracts sql-files out of your database into folders organized by schema and type (function, trigger, view). Editing is then executed using your own choice of tools.
 
+## Installation
+
+``Cargo add pgburst``
+
+
+
 ## Features
 
 You can
@@ -66,4 +72,5 @@ Next steps:
 [ ] Make connection string configurable (user, host)\
 [ ] Add export of types\
 [ ] Add export of roles and privileges\
-[ ] React to deletion of files (possibly also addition of files?)\
+[ ] React to deletion of files (possibly also addition of files?)
+

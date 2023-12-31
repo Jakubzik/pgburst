@@ -16,3 +16,4 @@ postgres = "0.19.7"
 notify = "6.1.1"
 clap = { version = "4.4.11", features = ["derive"] }
 colorize = "0.1.0"
+
