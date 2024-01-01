@@ -2,3 +2,7 @@ target/*
 tables.sql
 Cargo.lock
 PKGBUILD
+./manpage.md
+./build.sh
+./pgburst.1
+

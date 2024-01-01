@@ -9,22 +9,22 @@ use crate::pg::PgObjectType;
 #[command(
     about = "Extracts functions, views, and triggers from Postgresql databases, saves them in folders as sql-files, and (optionally) reacts to changes on those files\n",
     long_about = "\nExample usage: 
-    `pg_burst MyDb`
+    `pgburst MyDb`
     exports all functions, views, and triggers into files in the folder ./MyDb/
 
-    `pg_burst -s public -s web_api MyDb`
+    `pgburst -s public -s web_api MyDb`
     exports all functions, views, and triggers in schema 'public' and in schema 'web_api' into files in the folder ./MyDb/
 
-    `pg_burst -f login MyDb`
+    `pgburst -f login MyDb`
     exports all functions, views, and triggers whose sql representation contains the text 'login' in ./MyDb/
 
-    `pg_burst MyDb views`
+    `pgburst MyDb views`
     exports all views (in all schemas) to files in the folder ./MyDb/
 
-    `pg_burst -b ~/temp_bursts MyDb`
+    `pgburst -b ~/temp_bursts MyDb`
     exports all functions, views, and triggers into files in the folder ~/tmp_bursts/MyDb. The folder is created if it does not yet exist.
 
-    `pg_burst -w MyDb`
+    `pgburst -w MyDb`
     exports the sql files. If a file is changed, the new contents are executed against MyDb, and the folder ./MyDb/pg_burst_skript is filled with a script intended to reproduce (or undo) the effect if executed in a different environment.
     "
 )]
