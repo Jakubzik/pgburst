@@ -5,4 +5,5 @@ PKGBUILD
 ./manpage.md
 ./build.sh
 ./pgburst.1
-
+./private_todo.md
+./CHANGELOG.md

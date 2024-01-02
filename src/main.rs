@@ -27,7 +27,7 @@ use crate::conf::BurstConf;
 // #[derive(Parser)]
 // #[command(name = "PgBurst")]
 // #[command(author = "Heiko Jakubzik <heiko.jakubzik@shj-online.de>")]
-// #[command(version = "0.1")]
+// #[command(version = "0.1.1")]
 // #[command(
 //     about = "Extracts functions, views, and triggers from Postgresql databases, saves them in folders as sql-files, and (optionally) reacts to changes on those files\n",
 //     long_about = "\nExample usage:
