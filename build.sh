@@ -3,7 +3,7 @@
 # ======================================
 # EDIT
 PGBURSTVERSION="0.1.2" 
-MSG="Added parameters for postgres user and host" # COMMIT MSG FOR GIT
+MSG="Added parameters for postgres user and hosAdded parameters for postgres user and hostt" # COMMIT MSG FOR GIT
 # ======================================
 
 ORDNER="/home/heiko/development/rust/pgburst"
@@ -60,7 +60,7 @@ sed -e "s/#SHASUM#/$SHASUM/g" "$AUR_ORDNER/PKGBUILD_template.md" > "$AUR_ORDNER/
 sed -i -e "s/#PGBURSTVERSION#/$PGBURSTVERSION/g" "$AUR_ORDNER/pgburst/PKGBUILD" 
 
 echo "BUILD: Going to $AUR_ORDNER, pushing commit there..."
-cd "$AUR_ORDNER"
+cd "$AUR_ORDNER/pgburst"
 git add .
 git commit -m "$MSG"
 git push
@@ -70,5 +70,6 @@ echo "BUILD: ...pushed"
 #
 
 echo "What about crates.io?"
+cargo publish
 echo
 
