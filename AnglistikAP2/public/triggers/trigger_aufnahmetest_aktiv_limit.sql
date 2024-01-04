@@ -1,0 +1,1 @@
+create trigger trigger_aufnahmetest_aktiv_limitBEFORE INSERT,UPDATE on "public"."t_aufnahmetest" for each row EXECUTE FUNCTION trigger_aufnahmetest_upsert()

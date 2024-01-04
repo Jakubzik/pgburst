@@ -5,7 +5,6 @@ use crate::pg::PgObjectType;
 #[derive(Parser)]
 #[command(name = "PgBurst")]
 #[command(author = "Heiko Jakubzik <heiko.jakubzik@shj-online.de>")]
-#[command(version = "0.1")]
 #[command(
     about = "Extracts functions, views, and triggers from Postgresql databases, saves them in folders as sql-files, and (optionally) reacts to changes on those files\n",
     long_about = "\nExample usage: 
@@ -33,6 +32,14 @@ pub struct BurstConf {
     /// Name of the database to connect to.
     // #[arg(last = true)]
     pub(crate) db_name: String,
+
+    /// Username of postgres user connecting to the database
+    #[arg(long, default_value = "postgres")]
+    pub(crate) pg_user: String,
+
+    /// Machine hosting the postgres database
+    #[arg(long, default_value = "localhost")]
+    pub(crate) pg_host: String,
 
     /// Where to store the sql files. (Default is .)
     #[arg(short, long)]

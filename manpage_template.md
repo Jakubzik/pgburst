@@ -2,8 +2,8 @@
 title: PGBURST
 section: 1
 header: User Manual
-footer: pgburst 0.1.2
-date: Januar 04, 2024
+footer: pgburst #PGBURSTVERSION#
+date: #DATUM#
 ---
 # NAME
 

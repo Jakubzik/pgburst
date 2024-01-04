@@ -3,6 +3,8 @@
 
 # Dokumentation
 
+Steps for update
+
 ## GitHub
 
 ## AUR

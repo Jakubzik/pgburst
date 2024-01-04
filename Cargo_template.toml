@@ -1,6 +1,6 @@
 [package]
 name = "pgburst"
-version = "0.1.2"
+version = "#PGBURSTVERSION#"
 edition = "2021"
 description = "A file-based way to edit postgresql databases (procedures, views, triggers) without GUI"
 categories = ["database", "development-tools", "command-line-utilities"]

@@ -3,7 +3,8 @@ tables.sql
 Cargo.lock
 PKGBUILD
 ./manpage.md
+./manpage_template.md
+./Cargo_template.toml
 ./build.sh
 ./pgburst.1
 ./private_todo.md
-./CHANGELOG.md

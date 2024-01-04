@@ -12,7 +12,11 @@ While there are a number of excellent GUIs for editing postgres databases, they 
 
 ## Installation
 
-``Cargo add pgburst``
+``Cargo install pgburst``
+
+**Archlinux**
+
+``yay -S pgburst``
 
 
 
@@ -53,6 +57,12 @@ Options:\
   -b, --burst-folder <BURST_FOLDER>
           Where to store the sql files. (Default is .)
 
+  --pg-user,
+          user connecting to the database (default is postgres)
+
+  --pg-host,
+          host to connect to (default is localhost)
+
   -s, --schema-filter <SCHEMA_FILTER>
           Only export items of this schema or list of schemas (option can be used repeatedly to export more than one schema)
 
@@ -69,7 +79,7 @@ Options:\
 
 Next steps:
 
-[ ] Make connection string configurable (user, host)\
+[x] Make connection string configurable (user, host) [v0.1.2]\
 [ ] Add export of types\
 [ ] Add export of roles and privileges\
 [ ] React to deletion of files (possibly also addition of files?)
