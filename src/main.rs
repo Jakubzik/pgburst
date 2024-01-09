@@ -6,21 +6,22 @@ use pg::{PgDb, PgObjectType};
 use std::{
     fs::{File, OpenOptions},
     io::Write,
-    path::Path,
+    path::{Path, PathBuf},
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
 
 use colorize::AnsiColor;
 
 /// @todo
-/// - make pg connect string configurable
 /// - add types
 /// - make priviliges configurable
 /// - add table definitions (?)
 /// @ideas
 /// - allow to run queries and export as markdown?
+/// - allow to run queries/updates from file
 /// @done
-/// - make pg connect string configurable
+/// - make pg connect string configurable [0.1.2]
+/// - FIX: schema ap_tests with fn tests does not come through [0.1.3]
 use notify::{Config, RecommendedWatcher, RecursiveMode, Result, Watcher};
 use postgres::{Client, NoTls};
 
@@ -73,6 +74,7 @@ fn main() -> Result<()> {
     analyze_db(&mut client, &mut pg_db, PgObjectType::Function);
     analyze_db(&mut client, &mut pg_db, PgObjectType::Trigger);
     analyze_db(&mut client, &mut pg_db, PgObjectType::View);
+    analyze_db(&mut client, &mut pg_db, PgObjectType::Type);
 
     let msg = format!(
         "Files are stored in: {}",
@@ -99,15 +101,98 @@ fn main() -> Result<()> {
 }
 
 fn analyze_db(client: &mut Client, pg_db: &mut PgDb, pg_type: PgObjectType) {
-    for row in client.query(pg_type.get_sql(), &[]).unwrap() {
-        let schema: String = row.get("schema_name");
-        let fname: String = row.get("obj_name");
-        let fdef: String = row.get("definition");
-
-        pg_db.add_new(schema, pg_type, fname, fdef);
+    // Types (same as table definitions) don't deliver
+    // their sql definition from the query, this
+    // has to be assembled separately
+    if pg_type == PgObjectType::Type {
+        analyze_types(client, pg_db)
+    } else {
+        // Views, functions, and triggers deliver their
+        // defining sql in column "definition" and are
+        // all treated the same:
+        for row in client.query(pg_type.get_sql(), &[]).unwrap() {
+            let schema: String = row.get("schema_name");
+            let fname: String = row.get("obj_name");
+            let fdef: String = row.get("definition");
+            pg_db.add_new(schema, pg_type, fname, fdef);
+        }
     }
 }
 
+fn analyze_types(client: &mut Client, pg_db: &mut PgDb) {
+    //
+    let mut schema_old: String = "".to_string();
+    let mut obj_name_old: String = "".to_string();
+    let mut fdef: String = "".to_string();
+    let mut is_enum: bool = false;
+
+    for row in client.query(PgObjectType::Type.get_sql(), &[]).unwrap() {
+        let schema: String = row.get("schema_name");
+        let mut obj_name: String = row.get("obj_name");
+
+        // obj_name comes through (in the query) with the schema name when
+        // it's not an enum type; this is why we're dropping the prefix
+        // of the schema here:
+        if obj_name.starts_with(&format!("{schema}.")) {
+            obj_name = obj_name[schema.len() + 1..].to_string();
+        }
+
+        // Is this a new type or new columns for the old type?
+
+        if (schema == schema_old) && (obj_name == obj_name_old) {
+            let cname: String = row.get("column_name");
+            if is_enum {
+                fdef = format!("{fdef}, '{cname}'");
+            } else {
+                let dtype: String = row.get("data_type");
+                fdef = format!("{fdef}, {cname} {dtype}");
+            }
+        } else {
+            // If this is not the first loop
+            if fdef.clone().len() > 1 {
+                let s_enum = match is_enum {
+                    true => "enum",
+                    _ => "",
+                };
+
+                fdef = format!("-- drop type \"{schema_old}\".\"{obj_name_old}\"\n\ncreate type \"{schema_old}\".\"{obj_name_old}\" as {s_enum} ({fdef});");
+
+                pg_db.add_new(
+                    schema_old.clone(),
+                    PgObjectType::Type,
+                    obj_name_old.clone(),
+                    fdef.clone(),
+                );
+            }
+            let cname: String = row.get("column_name");
+            is_enum = row.get::<_, String>("burst_type") == "enum";
+            if is_enum {
+                fdef = format!("'{cname}'");
+            } else {
+                let dtype: String = row.get("data_type");
+                fdef = format!("{cname} {dtype}");
+            }
+            // fdef = "".to_string();
+            schema_old = schema.clone();
+            obj_name_old = obj_name.clone();
+        }
+
+        // same schema and obj_name? - collect column_names [diff between burst_type]
+    }
+    let s_enum = match is_enum {
+        true => "enum",
+        _ => "",
+    };
+    // Final type:
+    fdef = format!("-- finale drop type \"{schema_old}\".\"{obj_name_old}\"\n\ncreate type \"{schema_old}\".\"{obj_name_old}\" as {s_enum} ({fdef});");
+
+    pg_db.add_new(
+        schema_old.clone(),
+        PgObjectType::Type,
+        obj_name_old.clone(),
+        fdef.clone(),
+    );
+}
 fn execute_and_document_change(
     client: &mut Client,
     conf: &BurstConf,
@@ -202,7 +287,8 @@ fn track_change(
 fn watch(
     conf: &BurstConf,
     client: &mut Client,
-    files: &Vec<String>,
+    // files: &Vec<String>,
+    files: &Vec<PathBuf>,
     tmp_folder: &str,
 ) -> notify::Result<()> {
     let (tx, rx) = std::sync::mpsc::channel();

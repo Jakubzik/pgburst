@@ -2,8 +2,8 @@
 #
 # ======================================
 # EDIT
-PGBURSTVERSION="0.1.2" 
-MSG="Added parameters for postgres user and hosAdded parameters for postgres user and hostt" # COMMIT MSG FOR GIT
+PGBURSTVERSION="0.2.0" 
+MSG="Fixed omission of first item, added pg types" # COMMIT MSG FOR GIT
 # ======================================
 
 ORDNER="/home/heiko/development/rust/pgburst"
@@ -69,7 +69,7 @@ echo "BUILD: ...pushed"
 # gh release create v"$PGBURSTVERSION" "$ORDNER/target/cargo-aur/$PGV"
 #
 
-echo "What about crates.io?"
+echo "BUILD: Publishing on crates.io?"
 cargo publish
-echo
+echo "BUILD: finished"
 

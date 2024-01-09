@@ -1,6 +1,6 @@
 # PgBurst
 
-Extract functions, views, and triggers from your postgres database into files for editing.
+Extract functions, views, (composite or enum) types, and triggers from your postgres database into files for editing.
 
 ## Introduction
 
@@ -24,7 +24,7 @@ While there are a number of excellent GUIs for editing postgres databases, they 
 
 You can
 
-- extract *all* functions, views, and triggers, or 
+- extract *all* functions, views, (composite or enum) types, and triggers, or 
 - those of selected schemas, or 
 - those whose sql definition contains a specific text
 
@@ -79,8 +79,12 @@ Options:\
 
 Next steps:
 
-[x] Make connection string configurable (user, host) [v0.1.2]\
-[ ] Add export of types\
-[ ] Add export of roles and privileges\
+[x] Make connection string configurable (user, host) [v0.1.2]
+[/] Add export of types [v0.2.0, no range or box types]
+[ ] Add export of sequences
+[ ] Add export of table
+[ ] Add update/insert scripts 
+[ ] Add mode for querying through wait mode and an open file
+[ ] Add export of roles and privileges
 [ ] React to deletion of files (possibly also addition of files?)
 

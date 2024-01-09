@@ -2,8 +2,8 @@
 title: PGBURST
 section: 1
 header: User Manual
-footer: pgburst 0.1.2
-date: Januar 04, 2024
+footer: pgburst 0.2.0
+date: Januar 09, 2024
 ---
 # NAME
 
@@ -15,7 +15,7 @@ pgburst - tool to browse functions, views, and triggers of a postgres database.
 
 # DESCRIPTION
 
-**pgburst** extracts sql-files out of your database into folders organized by schema and type (function, trigger, view). Editing is then executed using your own choice of tools.
+**pgburst** extracts sql-files out of your database into folders organized by schema and type (function, trigger, view, type). Editing is then executed using your own choice of tools.
 
 You can select the files you would like to extract by choosing a schema, and/or an object type (function, view, or trigger), or by simply filtering for a text in the object's sql definition.
 
@@ -51,7 +51,7 @@ If invoked with the "-w" flag, **pgburst** will watch the files for changes, exe
 : print version
 
 **OBJECTS_FILTER**
-: one of "function," "view," "trigger"
+: one of "function," "view," "trigger", "type"; or a combination of those, separated by space.
 
 # EXAMPLES
 **pgburst MyDb**
@@ -69,8 +69,8 @@ If invoked with the "-w" flag, **pgburst** will watch the files for changes, exe
 **pg_burst -f sanity MyDb**
 : exports all functions, views, and triggers whose sql representation contains the text 'sanity' in ./MyDb/
 
-**pg_burst -f sanity MyDb function**
-: exports all functions whose sql representation contains the text 'sanity' in ./MyDb/ as sql files to the folder ./
+**pg_burst -f sanity MyDb function type**
+: exports all functions and types whose sql representation contains the text 'sanity' in ./MyDb/ as sql files to the folder ./
 
 **pg_burst MyDb view**
 : exports all views (in all schemas) as sql files to the folder ./MyDb/

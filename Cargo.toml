@@ -1,11 +1,11 @@
 [package]
 name = "pgburst"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2021"
 description = "A file-based way to edit postgresql databases (procedures, views, triggers) without GUI"
 categories = ["database", "development-tools", "command-line-utilities"]
 keywords = ["postgres", "database", "cli", "sql"]
-license = "GPL-3.0-only"
+license = "GPLv3"
 repository = "https://github.com/Jakubzik/pgburst"
 homepage = "https://github.com/Jakubzik/pgburst"
 authors = ["Heiko Jakubzik <heiko.jakubzik@shj-online.de>"]

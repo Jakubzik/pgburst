@@ -1,4 +1,4 @@
-use std::{fs::File, io::Write};
+use std::{fs::File, io::Write, path::PathBuf};
 
 use clap::ValueEnum;
 
@@ -24,6 +24,8 @@ pub enum PgObjectType {
     Function,
     Trigger,
     View,
+    Type,
+    // Table,
 }
 
 impl PgDb {
@@ -33,11 +35,13 @@ impl PgDb {
     /// @param tmp_folder stores original sql-files to enable UNDO-functionality.
     /// @returns a list of these files so that they can be
     /// monitored for changes (option 'watch').
-    pub fn burst(self, conf: &BurstConf, tmp_folder: &str) -> Result<Vec<String>, std::io::Error> {
+    pub fn burst(self, conf: &BurstConf, tmp_folder: &str) -> Result<Vec<PathBuf>, std::io::Error> {
+        // pub fn burst(self, conf: &BurstConf, tmp_folder: &str) -> Result<Vec<String>, std::io::Error> {
         let mut base_folder; // Utility
-        let mut file_paths: Vec<String> = vec![];
+                             // let mut file_paths: Vec<String> = vec![];
+        let mut file_paths: Vec<PathBuf> = vec![];
 
-        for i in 1..self.schemas.len() {
+        for i in 0..self.schemas.len() {
             if conf.schema_filter.is_none()
                 || conf
                     .schema_filter
@@ -45,7 +49,7 @@ impl PgDb {
                     .unwrap()
                     .contains(&self.schemas[i].name)
             {
-                for j in 1..self.schemas[i].pg_objects.len() {
+                for j in 0..self.schemas[i].pg_objects.len() {
                     base_folder = format!(
                         "{}/{}/{}/{}s",
                         conf.burst_folder.as_ref().unwrap_or(&".".to_string()),
@@ -93,7 +97,7 @@ impl PgDb {
     ) {
         // Is this a schema we already know?
         let mut b_found = false;
-        for i in 1..self.schemas.len() {
+        for i in 0..self.schemas.len() {
             if self.schemas[i].name == schema {
                 b_found = true;
                 self.schemas[i].pg_objects.push(PgObject {
@@ -123,32 +127,121 @@ impl PgObjectType {
             PgObjectType::Function => "function",
             PgObjectType::Trigger => "trigger",
             PgObjectType::View => "view",
+            PgObjectType::Type => "type",
+            // PgObjectType::Table => "table",
         }
     }
 
+    ///
+    /// Type (currently only composite and enum, not range or complex) is:
+    ///+------------+--------------+------------------------+-------------+-----------+------------------+-------------+-------------+
+    ///| burst_type | schema_name  | obj_name               | column_name | data_type | ordinal_position | is_required | description |
+    ///|------------+--------------+------------------------+-------------+-----------+------------------+-------------+-------------|
+    ///| composite  | ap_tests     | ap_tests.typ_composit  | f1          | integer   | 1                | False       |             |
+    ///| composite  | ap_tests     | ap_tests.typ_composit  | f2          | text      | 2                | False       |             |
+    ///| enum       | ap_tests     | bug_status             | new         |           | 1                | False       |             |
+    ///| enum       | ap_tests     | bug_status             | open        |           | 1                | False       |             |
+    ///| enum       | ap_tests     | bug_status             | closed      |           | 1                | False       |             |
+    ///| composite  | bewerber_api | bewerber_api.jwt_token | token       | text      | 1                | False       |             |
+    ///+------------+--------------+------------------------+-------------+-----------+------------------+-------------+-------------+
     pub fn get_sql(self) -> &'static str {
         match self {
+            // PgObjectType::Table => {
+            //     ""
+            //     }
+            PgObjectType::Type => {
+                "WITH types AS (
+                    SELECT n.nspname,
+                            pg_catalog.format_type ( t.oid, NULL ) AS obj_name,
+                            CASE
+                                WHEN t.typrelid != 0 THEN CAST ( 'tuple' AS pg_catalog.text )
+                                WHEN t.typlen < 0 THEN CAST ( 'var' AS pg_catalog.text )
+                                ELSE CAST ( t.typlen AS pg_catalog.text )
+                                END AS obj_type,
+                            coalesce ( pg_catalog.obj_description ( t.oid, 'pg_type' ), '' ) AS description
+                        FROM pg_catalog.pg_type t
+                        JOIN pg_catalog.pg_namespace n
+                            ON n.oid = t.typnamespace
+                        WHERE ( t.typrelid = 0
+                                OR ( SELECT c.relkind = 'c'
+                                        FROM pg_catalog.pg_class c
+                                        WHERE c.oid = t.typrelid ) )
+                            AND NOT EXISTS (
+                                    SELECT 1
+                                        FROM pg_catalog.pg_type el
+                                        WHERE el.oid = t.typelem
+                                        AND el.typarray = t.oid )
+                            AND n.nspname <> 'pg_catalog'
+                            AND n.nspname <> 'information_schema'
+                            AND n.nspname !~ '^pg_toast'
+                ),
+                cols AS (
+                    SELECT n.nspname::text AS schema_name,
+                            pg_catalog.format_type ( t.oid, NULL ) AS obj_name,
+                            a.attname::text AS column_name,
+                            pg_catalog.format_type ( a.atttypid, a.atttypmod ) AS data_type,
+                            a.attnotnull AS is_required,
+                            a.attnum AS ordinal_position,
+                            pg_catalog.col_description ( a.attrelid, a.attnum ) AS description
+                        FROM pg_catalog.pg_attribute a
+                        JOIN pg_catalog.pg_type t
+                            ON a.attrelid = t.typrelid
+                        JOIN pg_catalog.pg_namespace n
+                            ON ( n.oid = t.typnamespace )
+                        JOIN types
+                            ON ( types.nspname = n.nspname
+                                AND types.obj_name = pg_catalog.format_type ( t.oid, NULL ) )
+                        WHERE a.attnum > 0
+                            AND NOT a.attisdropped
+                )
+                SELECT 'composite' as burst_type, 
+                      cols.schema_name,
+                        cols.obj_name,
+                        cols.column_name,
+                        cols.data_type,
+                        cols.ordinal_position,
+                        cols.is_required,
+                        coalesce ( cols.description, '' ) AS description
+                    FROM cols
+                union
+                SELECT
+                    'enum' as burst_type,
+                    n.nspname as schema_name,
+                    pg_type.typname as type_name, 
+                    pg_enum.enumlabel as label,'',1,false,''
+                FROM
+                    pg_type, pg_catalog.pg_namespace n, pg_enum
+                where
+                    n.oid=pg_type.typnamespace and 
+                    pg_enum.enumtypid = pg_type.oid
+
+
+                    ORDER BY schema_name,
+                            obj_name,
+                            ordinal_position 
+                "
+            }
             PgObjectType::Function => {
                 "select n.nspname as schema_name,
-       p.proname as obj_name,
-       case p.prokind 
-            when 'f' then 'FUNCTION'
-            when 'p' then 'PROCEDURE'
-            when 'a' then 'AGGREGATE'
-            when 'w' then 'WINDOW'
-            end as kind,
-       l.lanname as language,
-       case when l.lanname = 'internal' then p.prosrc
-            else pg_get_functiondef(p.oid)
-            end as definition,
-       pg_get_function_arguments(p.oid) as arguments,
-       t.typname as return_type
-    from pg_proc p
-    left join pg_namespace n on p.pronamespace = n.oid
-    left join pg_language l on p.prolang = l.oid
-    left join pg_type t on t.oid = p.prorettype 
-    where n.nspname not in ('pg_catalog', 'information_schema')
-    order by schema_name, obj_name;"
+               p.proname as obj_name,
+               case p.prokind 
+                    when 'f' then 'FUNCTION'
+                    when 'p' then 'PROCEDURE'
+                    when 'a' then 'AGGREGATE'
+                    when 'w' then 'WINDOW'
+                    end as kind,
+               l.lanname as language,
+               case when l.lanname = 'internal' then p.prosrc
+                    else pg_get_functiondef(p.oid)
+                    end as definition,
+               pg_get_function_arguments(p.oid) as arguments,
+               t.typname as return_type
+            from pg_proc p
+            left join pg_namespace n on p.pronamespace = n.oid
+            left join pg_language l on p.prolang = l.oid
+            left join pg_type t on t.oid = p.prorettype 
+            where n.nspname not in ('pg_catalog', 'information_schema') and l.lanname != 'internal'
+            order by schema_name, obj_name;"
             }
             PgObjectType::Trigger => {
                 "select event_object_schema as schema_name,
@@ -202,8 +295,9 @@ fn write_sql(
     folder: &String,
     is_tmp: bool,
     pg_object: &PgObject,
-    v_return: &mut Vec<String>,
+    v_return: &mut Vec<PathBuf>,
 ) -> Result<(), std::io::Error> {
+    // std::fs::create_dir_all(folder.clone())?;
     std::fs::create_dir_all(folder.clone())?;
     let f_path = match is_tmp {
         false => format!("{folder}/{}.sql", pg_object.name),
@@ -211,10 +305,10 @@ fn write_sql(
     };
 
     if !is_tmp {
-        v_return.push(f_path.clone());
+        v_return.push(PathBuf::from(&f_path));
     }
 
-    let mut file = File::create(f_path)?;
+    let mut file = File::create(&f_path)?;
     file.write_all(pg_object.definition.as_bytes())?;
 
     file.flush()?;
