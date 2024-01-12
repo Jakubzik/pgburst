@@ -1,3 +1,8 @@
+# version 0.2.1
+
+- Added support for postgres sequences (enum and composite)
+- Fixed manpage (missing "types" here and there)
+
 # version 0.2.0
 
 Added support for postgres types (enum and composite)
@@ -27,10 +32,12 @@ Fixed
 
 [x] Make connection string configurable (user, host) [v0.1.2]
 [/] Add export of types [v0.2.0, no range or box types]
-[ ] Add export of sequences
+[x] Add export of sequences [v0.2.1]
+[ ] Add info for sequences as comments
 [ ] Add export of table
 [ ] Add update/insert scripts 
 [ ] Add mode for querying through wait mode and an open file
 [ ] Add export of roles and privileges
 [ ] React to deletion of files (possibly also addition of files?)
+[ ] Add .deb package
 

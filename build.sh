@@ -2,8 +2,8 @@
 #
 # ======================================
 # EDIT
-PGBURSTVERSION="0.2.0" 
-MSG="Fixed omission of first item, added pg types" # COMMIT MSG FOR GIT
+PGBURSTVERSION="0.2.1" 
+MSG="Added pg sequences" # COMMIT MSG FOR GIT
 # ======================================
 
 ORDNER="/home/heiko/development/rust/pgburst"
@@ -70,6 +70,7 @@ echo "BUILD: ...pushed"
 #
 
 echo "BUILD: Publishing on crates.io?"
+cd "$ORDNER"
 cargo publish
 echo "BUILD: finished"
 

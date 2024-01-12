@@ -2,8 +2,8 @@
 title: PGBURST
 section: 1
 header: User Manual
-footer: pgburst 0.2.0
-date: Januar 09, 2024
+footer: pgburst 0.2.1
+date: Januar 12, 2024
 ---
 # NAME
 
@@ -55,19 +55,19 @@ If invoked with the "-w" flag, **pgburst** will watch the files for changes, exe
 
 # EXAMPLES
 **pgburst MyDb**
-: exports all functions, views, and triggers into files in the folder ./MyDb/
+: exports all functions, views, types, triggers, and sequences into files in the folder ./MyDb/
 
 **pgburst --pg-user heiko MyDb**
-: exports all functions, views, and triggers into files in the folder ./MyDb/ connecting to database MyDb as user heiko
+: exports all functions, views, types and triggers, and sequences into files in the folder ./MyDb/ connecting to database MyDb as user heiko
 
 **pgburst --pg-host 1.2.3.4 heiko MyDb**
-: exports all functions, views, and triggers into files in the folder ./MyDb/ connecting to database MyDb on 1.2.3.4.
+: exports all functions, views, types and triggers, and sequences into files in the folder ./MyDb/ connecting to database MyDb on 1.2.3.4.
 
 **pg_burst -s public -s web_api MyDb**
-: exports all functions, views, and triggers in schema 'public' and in schema 'web_api' into files in the folder ./MyDb/
+: exports all functions, views, types and triggers, and sequences in schema 'public' and in schema 'web_api' into files in the folder ./MyDb/
 
 **pg_burst -f sanity MyDb**
-: exports all functions, views, and triggers whose sql representation contains the text 'sanity' in ./MyDb/
+: exports all functions, views, types and triggers, and sequences whose sql representation contains the text 'sanity' in ./MyDb/
 
 **pg_burst -f sanity MyDb function type**
 : exports all functions and types whose sql representation contains the text 'sanity' in ./MyDb/ as sql files to the folder ./

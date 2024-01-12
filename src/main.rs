@@ -13,13 +13,14 @@ use std::{
 use colorize::AnsiColor;
 
 /// @todo
-/// - add types
 /// - make priviliges configurable
 /// - add table definitions (?)
 /// @ideas
 /// - allow to run queries and export as markdown?
 /// - allow to run queries/updates from file
 /// @done
+/// - add sequences [0.2.1]
+/// - add types [0.2.0]
 /// - make pg connect string configurable [0.1.2]
 /// - FIX: schema ap_tests with fn tests does not come through [0.1.3]
 use notify::{Config, RecommendedWatcher, RecursiveMode, Result, Watcher};
@@ -75,6 +76,7 @@ fn main() -> Result<()> {
     analyze_db(&mut client, &mut pg_db, PgObjectType::Trigger);
     analyze_db(&mut client, &mut pg_db, PgObjectType::View);
     analyze_db(&mut client, &mut pg_db, PgObjectType::Type);
+    analyze_db(&mut client, &mut pg_db, PgObjectType::Sequence);
 
     let msg = format!(
         "Files are stored in: {}",

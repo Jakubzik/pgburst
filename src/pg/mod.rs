@@ -25,6 +25,7 @@ pub enum PgObjectType {
     Trigger,
     View,
     Type,
+    Sequence,
     // Table,
 }
 
@@ -128,6 +129,7 @@ impl PgObjectType {
             PgObjectType::Trigger => "trigger",
             PgObjectType::View => "view",
             PgObjectType::Type => "type",
+            PgObjectType::Sequence => "sequence",
             // PgObjectType::Table => "table",
         }
     }
@@ -149,6 +151,13 @@ impl PgObjectType {
             // PgObjectType::Table => {
             //     ""
             //     }
+
+            PgObjectType::Sequence => {
+                "SELECT schemaname as schema_name, sequencename as obj_name, 'CREATE SEQUENCE \"' || schemaname || '\".\"' || sequencename || '\" as ' || data_type ||  ' INCREMENT BY ' || increment_by ||  ' START WITH ' || start_value ||  ' MINVALUE ' || min_value ||  ' MAXVALUE ' || max_value ||  ' CACHE ' || cache_size || case when cycle then ' cycle ' else '' end || ';'
+                      AS definition
+                FROM pg_sequences;"
+
+                },
             PgObjectType::Type => {
                 "WITH types AS (
                     SELECT n.nspname,

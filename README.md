@@ -1,6 +1,6 @@
 # PgBurst
 
-Extract functions, views, (composite or enum) types, and triggers from your postgres database into files for editing.
+Extract functions, views, (composite or enum) types, sequences, and triggers from your postgres database into files for editing.
 
 ## Introduction
 
@@ -18,27 +18,25 @@ While there are a number of excellent GUIs for editing postgres databases, they 
 
 ``yay -S pgburst``
 
-
-
 ## Features
 
 You can
 
-- extract *all* functions, views, (composite or enum) types, and triggers, or 
+- extract *all* functions, views, (composite or enum) types, sequences, and triggers, or 
 - those of selected schemas, or 
 - those whose sql definition contains a specific text
 
 etc., and edit these files using the workflow you work best with.
 
-This shows how just the one function is extracted from the example database "dvdrental" whose definition contains the word "sanity" (in a comment):
+The gif below shows how just the one function is extracted from the example database "[dvdrental](https://github.com/arinpro/postgres-sample-db-dvdrental)" whose definition contains the word "sanity" (in a comment):
 
 ![Show sanity](pgburst_find.gif)
 
-### Keeping watch
+### Keeping watch, the "-w" flag
 
 ``pgburst`` can also *watch* the files for changes. 
 
-Flag ``-w`` starts pgburst so that altered files are executed against the database.
+Flag ``-w`` starts pgburst so that altered files are executed against the database as soon as they are saved.
 
 ![Show waiting](pgburst_wait.gif)
 
@@ -51,7 +49,7 @@ Arguments:\
       Name of the database to connect to
 
   [OBJECTS_FILTER]...
-      Only export items of the specified type(s) (list item types separated by space) [possible values: function, trigger, view]
+      Only export items of the specified type(s) (list item types separated by space) [possible values: function, trigger, view, type, sequence]
 
 Options:\
   -b, --burst-folder <BURST_FOLDER>
@@ -81,7 +79,8 @@ Next steps:
 
 [x] Make connection string configurable (user, host) [v0.1.2]
 [/] Add export of types [v0.2.0, no range or box types]
-[ ] Add export of sequences
+[x] Add export of sequences [v0.2.1]
+[ ] Add info on sequences in comments
 [ ] Add export of table
 [ ] Add update/insert scripts 
 [ ] Add mode for querying through wait mode and an open file
