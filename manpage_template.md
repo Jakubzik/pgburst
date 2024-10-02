@@ -7,7 +7,7 @@ date: #DATUM#
 ---
 # NAME
 
-pgburst - tool to browse functions, views, and triggers of a postgres database.
+pgburst - tool to browse functions, views, types, sequences and triggers of a postgres database.
 
 # SYNOPSIS
 
@@ -51,23 +51,23 @@ If invoked with the "-w" flag, **pgburst** will watch the files for changes, exe
 : print version
 
 **OBJECTS_FILTER**
-: one of "function," "view," "trigger", "type"; or a combination of those, separated by space.
+: one of "function," "view," "trigger", "type," "sequence"; or a combination of those, separated by space.
 
 # EXAMPLES
 **pgburst MyDb**
 : exports all functions, views, types, triggers, and sequences into files in the folder ./MyDb/
 
 **pgburst --pg-user heiko MyDb**
-: exports all functions, views, types and triggers, and sequences into files in the folder ./MyDb/ connecting to database MyDb as user heiko
+: exports all functions, views, types, triggers, and sequences into files in the folder ./MyDb/ connecting to database MyDb as user heiko
 
 **pgburst --pg-host 1.2.3.4 heiko MyDb**
-: exports all functions, views, types and triggers, and sequences into files in the folder ./MyDb/ connecting to database MyDb on 1.2.3.4.
+: exports all functions, views, types, triggers, and sequences into files in the folder ./MyDb/ connecting to database MyDb on 1.2.3.4.
 
 **pg_burst -s public -s web_api MyDb**
-: exports all functions, views, types and triggers, and sequences in schema 'public' and in schema 'web_api' into files in the folder ./MyDb/
+: exports all functions, views, types, triggers, and sequences in schema 'public' and in schema 'web_api' into files in the folder ./MyDb/
 
 **pg_burst -f sanity MyDb**
-: exports all functions, views, types and triggers, and sequences whose sql representation contains the text 'sanity' in ./MyDb/
+: exports all functions, views, types, triggers, and sequences whose sql representation contains the text 'sanity' in ./MyDb/
 
 **pg_burst -f sanity MyDb function type**
 : exports all functions and types whose sql representation contains the text 'sanity' in ./MyDb/ as sql files to the folder ./

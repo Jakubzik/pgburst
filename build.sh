@@ -2,8 +2,8 @@
 #
 # ======================================
 # EDIT
-PGBURSTVERSION="0.2.1" 
-MSG="Added pg sequences" # COMMIT MSG FOR GIT
+PGBURSTVERSION="0.2.2" 
+MSG="Update libraries" # COMMIT MSG FOR GIT
 # ======================================
 
 ORDNER="/home/heiko/development/rust/pgburst"
