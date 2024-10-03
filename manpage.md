@@ -2,7 +2,7 @@
 title: PGBURST
 section: 1
 header: User Manual
-footer: pgburst 0.2.3
+footer: pgburst 0.2.4
 date: Oktober 03, 2024
 ---
 # NAME

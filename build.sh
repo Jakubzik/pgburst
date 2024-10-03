@@ -2,7 +2,7 @@
 #
 # ======================================
 # EDIT
-PGBURSTVERSION="0.2.3" 
+PGBURSTVERSION="0.2.4" 
 MSG="Update libraries" # COMMIT MSG FOR GIT
 # ======================================
 
@@ -31,14 +31,15 @@ echo ""
 echo "BUILD: Compiling manpage..."
 rm $MANFILE
 pandoc ./manpage.md -s -t man -o ./pgburst.1
-gzip ./pgburst.1
-echo "BUILD: ...compiled"
 check_outcome
+gzip ./pgburst.1
+check_outcome
+echo "BUILD: ...compiled"
 
 echo "BUILD: Compiling binary for AUR with -m..."
 cargo-aur -m b
-echo "BUILD: ...compiled."
 check_outcome
+echo "BUILD: ...compiled."
 
 PGV="pgburst-$PGBURSTVERSION-x86_64.tar.gz"
 echo "BUILD: Producing binary $PGV with manpage inside..."
@@ -49,8 +50,10 @@ cp "$ORDNER/target/cargo-aur/LICENSE.md" "$TMPFOLDER/"
 cp "$ORDNER/pgburst.1.gz" "$TMPFOLDER/"
 cd $TMPFOLDER
 tar -xf "$PGV"
+check_outcome
 rm "$PGV"
 tar -czf $PGV pgburst LICENSE.md pgburst.1.gz
+check_outcome
 cp $PGV "$ORDNER/target/cargo-aur/"
 cp $PGV ~/tools/pgburst_upstream/
 echo "BUILD: ...produced."

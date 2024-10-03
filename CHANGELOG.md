@@ -1,6 +1,10 @@
 # version 0.2.4
 
-- Repair musl problem
+- Repair musl problem, repair sha checksum problem
+
+# version 0.2.3
+
+- No changes.
 
 # version 0.2.2
 
