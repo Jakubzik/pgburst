@@ -9,10 +9,10 @@ MSG="Update libraries" # COMMIT MSG FOR GIT
 function check_outcome {
   ret_code=$1
   if [ $ret_code -ne 0 ] ; then
-    echo -e "\e[31mFAIL: $ret_code\e[0m";
+    echo -e "FAIL: $ret_code";
     exit 1;
   else
-    echo -e "\e[32mok\e[0m"
+    echo -e "ok"
   fi;
 }
 
