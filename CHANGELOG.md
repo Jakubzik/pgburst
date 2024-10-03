@@ -1,3 +1,11 @@
+# version 0.2.4
+
+- Repair musl problem
+
+# version 0.2.2
+
+- Update of deps
+
 # version 0.2.1
 
 - Added support for postgres sequences (enum and composite)

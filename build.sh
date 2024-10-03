@@ -2,9 +2,19 @@
 #
 # ======================================
 # EDIT
-PGBURSTVERSION="0.2.2" 
+PGBURSTVERSION="0.2.3" 
 MSG="Update libraries" # COMMIT MSG FOR GIT
 # ======================================
+
+function check_outcome {
+  ret_code=$1
+  if [ $ret_code -ne 0 ] ; then
+    echo -e "\e[31mFAIL: $ret_code\e[0m";
+    exit 1;
+  else
+    echo -e "\e[32mok\e[0m"
+  fi;
+}
 
 ORDNER="/home/heiko/development/rust/pgburst"
 AUR_ORDNER="/home/heiko/tools/pgburst_upstream"
@@ -23,10 +33,12 @@ rm $MANFILE
 pandoc ./manpage.md -s -t man -o ./pgburst.1
 gzip ./pgburst.1
 echo "BUILD: ...compiled"
+check_outcome
 
 echo "BUILD: Compiling binary for AUR with -m..."
 cargo-aur -m b
 echo "BUILD: ...compiled."
+check_outcome
 
 PGV="pgburst-$PGBURSTVERSION-x86_64.tar.gz"
 echo "BUILD: Producing binary $PGV with manpage inside..."
@@ -42,6 +54,7 @@ tar -czf $PGV pgburst LICENSE.md pgburst.1.gz
 cp $PGV "$ORDNER/target/cargo-aur/"
 cp $PGV ~/tools/pgburst_upstream/
 echo "BUILD: ...produced."
+check_outcome
 
 cd "$ORDNER"
 echo "BUILD: Updating GIT..."
@@ -50,6 +63,7 @@ git commit -m "$MSG"
 git push origin
 gh release create v"$PGBURSTVERSION" --notes "$MSG" "$ORDNER/target/cargo-aur/$PGV"
 echo "BUILD: ...committed"
+check_outcome
 
 SHASUM=$(sha256sum  "$AUR_ORDNER/$PGV" | awk '{print $1}')
 
@@ -65,6 +79,7 @@ git add .
 git commit -m "$MSG"
 git push
 echo "BUILD: ...pushed"
+check_outcome
 
 # gh release create v"$PGBURSTVERSION" "$ORDNER/target/cargo-aur/$PGV"
 #
@@ -74,3 +89,4 @@ cd "$ORDNER"
 cargo publish
 echo "BUILD: finished"
 
+check_outcome
