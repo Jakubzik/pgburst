@@ -77,13 +77,10 @@ Options:\
 
 Next steps:
 
-[x] Make connection string configurable (user, host) [v0.1.2]
-[/] Add export of types [v0.2.0, no range or box types]
-[x] Add export of sequences [v0.2.1]
-[ ] Add info on sequences in comments
-[ ] Add export of table
-[ ] Add update/insert scripts 
-[ ] Add mode for querying through wait mode and an open file
-[ ] Add export of roles and privileges
+[x] Make connection string configurable (user, host) [v0.1.2]\
+[/] Add export of types [v0.2.0, no range or box types]\
+[x] Add export of sequences [v0.2.1]\
+[ ] Add info on sequences in comments\
+[ ] Add export of roles and privileges\
 [ ] React to deletion of files (possibly also addition of files?)
 
