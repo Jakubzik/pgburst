@@ -261,9 +261,9 @@ impl PgObjectType {
         action_timing as activation,
         action_condition as condition,
         'create trigger '|| trigger_name || action_timing || ' ' || string_agg(event_manipulation, ',') || ' on '  || '\"' || event_object_schema || '\".\"' || event_object_table || '\" for each row ' || action_statement as definition 
- from information_schema.triggers
- group by 1,2,3,4,6,7, action_statement
- order by schema_name,
+             from information_schema.triggers
+             group by 1,2,3,4,6,7, action_statement
+             order by schema_name,
           table_name;"
                 // 88gelöscht
             }
