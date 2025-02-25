@@ -122,7 +122,6 @@ fn analyze_db(client: &mut Client, pg_db: &mut PgDb, pg_type: PgObjectType) {
 }
 
 fn analyze_types(client: &mut Client, pg_db: &mut PgDb) {
-    //
     let mut schema_old: String = "".to_string();
     let mut obj_name_old: String = "".to_string();
     let mut fdef: String = "".to_string();
@@ -140,7 +139,6 @@ fn analyze_types(client: &mut Client, pg_db: &mut PgDb) {
         }
 
         // Is this a new type or new columns for the old type?
-
         if (schema == schema_old) && (obj_name == obj_name_old) {
             let cname: String = row.get("column_name");
             if is_enum {
@@ -285,11 +283,9 @@ fn track_change(
     Ok(())
 }
 
-// fn watch<P: AsRef<Path>>(path: P) -> notify::Result<()> {
 fn watch(
     conf: &BurstConf,
     client: &mut Client,
-    // files: &Vec<String>,
     files: &Vec<PathBuf>,
     tmp_folder: &str,
 ) -> notify::Result<()> {
@@ -315,6 +311,7 @@ fn watch(
     std::fs::create_dir_all(&sql_alterations_folder)?;
 
     let mut f_do = File::create(format!("{}/apply_changes.sh", sql_alterations_folder))?;
+
     let mut f_undo = File::create(format!("{}/apply_changes_UNDO.sh", sql_alterations_folder))?;
 
     f_do.write_all(
@@ -335,6 +332,7 @@ fn watch(
 
     let mut i_count: usize = 1;
     let mut start = Instant::now();
+
     for res in rx {
         match res {
             Ok(event) => {
