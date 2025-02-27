@@ -1,3 +1,8 @@
+# version 0.2.5
+
+- added parameter --version (-v)
+- Rust edition 21->24
+
 # version 0.2.4
 
 - Repair musl problem, repair sha checksum problem

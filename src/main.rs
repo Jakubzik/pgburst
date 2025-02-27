@@ -60,12 +60,16 @@ fn main() -> Result<()> {
             println!("{}", msg.green());
             client
         }
+
         Err(e) => {
-            let msg = match e.as_db_error(){
-                Some( db_err) => format!(
-                "Cannot connect to database >{db_name}<: {}",
-                db_err.message()),
-                None => format!("Cannot connect to database {db_name} -- is the server running and accepting connections? (Try pg_burst --help)")
+            let msg = match e.as_db_error() {
+                Some(db_err) => format!(
+                    "Cannot connect to database >{db_name}<: {}",
+                    db_err.message()
+                ),
+                None => format!(
+                    "Cannot connect to database {db_name} -- is the server running and accepting connections? (Try pg_burst --help)"
+                ),
             };
             println!("{}", msg.bold().red());
             return Ok(());
@@ -88,7 +92,11 @@ fn main() -> Result<()> {
     let files = match pg_db.burst(&config, &tmp_folder) {
         Ok(vec_of_files) => vec_of_files,
         Err(some_err) => {
-            let msg = format!("Failed to save the SQL files -- probably I have no permission to save the files in >{}<: (>{}<). Try to specify a different location using '-b'.", config.burst_folder.unwrap(), some_err);
+            let msg = format!(
+                "Failed to save the SQL files -- probably I have no permission to save the files in >{}<: (>{}<). Try to specify a different location using '-b'.",
+                config.burst_folder.unwrap(),
+                some_err
+            );
             println!("{}", msg.red().bold());
             std::process::exit(1);
         }
@@ -155,7 +163,9 @@ fn analyze_types(client: &mut Client, pg_db: &mut PgDb) {
                     _ => "",
                 };
 
-                fdef = format!("-- drop type \"{schema_old}\".\"{obj_name_old}\"\n\ncreate type \"{schema_old}\".\"{obj_name_old}\" as {s_enum} ({fdef});");
+                fdef = format!(
+                    "-- drop type \"{schema_old}\".\"{obj_name_old}\"\n\ncreate type \"{schema_old}\".\"{obj_name_old}\" as {s_enum} ({fdef});"
+                );
 
                 pg_db.add_new(
                     schema_old.clone(),
@@ -184,7 +194,9 @@ fn analyze_types(client: &mut Client, pg_db: &mut PgDb) {
         _ => "",
     };
     // Final type:
-    fdef = format!("-- finale drop type \"{schema_old}\".\"{obj_name_old}\"\n\ncreate type \"{schema_old}\".\"{obj_name_old}\" as {s_enum} ({fdef});");
+    fdef = format!(
+        "-- finale drop type \"{schema_old}\".\"{obj_name_old}\"\n\ncreate type \"{schema_old}\".\"{obj_name_old}\" as {s_enum} ({fdef});"
+    );
 
     pg_db.add_new(
         schema_old.clone(),

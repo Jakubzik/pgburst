@@ -4,6 +4,7 @@ use crate::pg::PgObjectType;
 
 #[derive(Parser)]
 #[command(name = "PgBurst")]
+#[command(version)]
 #[command(author = "Heiko Jakubzik <heiko.jakubzik@shj-online.de>")]
 #[command(
     about = "Extracts functions, views, and triggers from Postgresql databases, saves them in folders as sql-files, and (optionally) reacts to changes on those files\n",
@@ -57,7 +58,7 @@ pub struct BurstConf {
     #[arg(short, long)]
     pub(crate) name_filter: Option<String>,
 
-    /// Only export items whose sql respresentation contains the given text.
+    /// Only export items whose sql representation contains the given text.
     #[arg(short, long)]
     pub(crate) find: Option<String>,
 

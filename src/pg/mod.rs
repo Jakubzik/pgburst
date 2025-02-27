@@ -37,9 +37,7 @@ impl PgDb {
     /// @returns a list of these files so that they can be
     /// monitored for changes (option 'watch').
     pub fn burst(self, conf: &BurstConf, tmp_folder: &str) -> Result<Vec<PathBuf>, std::io::Error> {
-        // pub fn burst(self, conf: &BurstConf, tmp_folder: &str) -> Result<Vec<String>, std::io::Error> {
         let mut base_folder; // Utility
-                             // let mut file_paths: Vec<String> = vec![];
         let mut file_paths: Vec<PathBuf> = vec![];
 
         for i in 0..self.schemas.len() {
