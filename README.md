@@ -59,7 +59,7 @@ Options:\
           user connecting to the database (default is postgres)
 
   --pg-host,
-          host to connect to (default is localhost)
+          host to connect to (default is 127.0.0.1)
 
   -s, --schema-filter <SCHEMA_FILTER>
           Only export items of this schema or list of schemas (option can be used repeatedly to export more than one schema)

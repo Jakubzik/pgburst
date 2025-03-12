@@ -2,8 +2,8 @@
 #
 # ======================================
 # EDIT
-PROGRAMMVERSION="0.2.5" 
-MSG="Bugfix and Rust edition 21->24, parameter --v" # COMMIT MSG FOR GIT
+PROGRAMMVERSION="0.2.6" 
+MSG="Changing from 'localhost' to '127.0.0.1'" # COMMIT MSG FOR GIT
 # ======================================
 
 function check_test_outcome {

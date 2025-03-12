@@ -38,8 +38,8 @@ pub struct BurstConf {
     #[arg(long, default_value = "postgres")]
     pub(crate) pg_user: String,
 
-    /// Machine hosting the postgres database
-    #[arg(long, default_value = "localhost")]
+    /// Machine hosting the postgres database (default changed in 0.2.6, March 25)
+    #[arg(long, default_value = "127.0.0.1")]
     pub(crate) pg_host: String,
 
     /// Where to store the sql files. (Default is .)

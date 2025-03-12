@@ -1,3 +1,7 @@
+# version 0.2.6
+
+- changed default from localhost to 127.0.0.1
+
 # version 0.2.5
 
 - added parameter --version (-v)
