@@ -1,11 +1,13 @@
 use clap::Parser;
+pub(crate) use std::{io::Write, process::Command};
 
 mod conf;
 mod pg;
+use crate::pg::dump_analyzer::Tables;
+
 use pg::{PgDb, PgObjectType};
 use std::{
     fs::{File, OpenOptions},
-    io::Write,
     path::{Path, PathBuf},
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
@@ -76,11 +78,12 @@ fn main() -> Result<()> {
         }
     };
 
-    analyze_db(&mut client, &mut pg_db, PgObjectType::Function);
-    analyze_db(&mut client, &mut pg_db, PgObjectType::Trigger);
-    analyze_db(&mut client, &mut pg_db, PgObjectType::View);
-    analyze_db(&mut client, &mut pg_db, PgObjectType::Type);
-    analyze_db(&mut client, &mut pg_db, PgObjectType::Sequence);
+    analyze_db(&mut client, &mut pg_db, PgObjectType::Function, None);
+    analyze_db(&mut client, &mut pg_db, PgObjectType::Trigger, None);
+    analyze_db(&mut client, &mut pg_db, PgObjectType::View, None);
+    analyze_db(&mut client, &mut pg_db, PgObjectType::Type, None);
+    analyze_db(&mut client, &mut pg_db, PgObjectType::Sequence, None);
+    analyze_db(&mut client, &mut pg_db, PgObjectType::Table, Some(&db_name));
 
     let msg = format!(
         "Files are stored in: {}",
@@ -110,23 +113,92 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn analyze_db(client: &mut Client, pg_db: &mut PgDb, pg_type: PgObjectType) {
+fn analyze_db(client: &mut Client, pg_db: &mut PgDb, pg_type: PgObjectType, db_name: Option<&str>) {
     // Types (same as table definitions) don't deliver
     // their sql definition from the query, this
     // has to be assembled separately
-    if pg_type == PgObjectType::Type {
-        analyze_types(client, pg_db)
-    } else {
-        // Views, functions, and triggers deliver their
-        // defining sql in column "definition" and are
-        // all treated the same:
-        for row in client.query(pg_type.get_sql(), &[]).unwrap() {
-            let schema: String = row.get("schema_name");
-            let fname: String = row.get("obj_name");
-            let fdef: String = row.get("definition");
-            pg_db.add_new(schema, pg_type, fname, fdef);
+    match pg_type {
+        PgObjectType::Type => analyze_types(client, pg_db),
+        PgObjectType::Table => analyze_tables(client, pg_db, db_name.unwrap()),
+        _ => {
+            // Views, functions, and triggers deliver their
+            // defining sql in column "definition" and are
+            // all treated the same:
+            for row in client.query(pg_type.get_sql(), &[]).unwrap() {
+                let schema: String = row.get("schema_name");
+                let fname: String = row.get("obj_name");
+                let fdef: String = row.get("definition");
+                pg_db.add_new(schema, pg_type, fname, fdef);
+            }
         }
     }
+}
+
+///
+/// June 11, 2025
+/// Need to
+/// - analyze how other objects (i.e. views) are treated and stored!
+///   + we need PgDb entries (Type, Name, Definition) so that .burst works
+/// - call pg_dump (preferably to /tmp/whatever, or configurable location)
+/// - analyze the dump for create table
+/// - store things the same way they are stored for other objects
+fn analyze_tables(_client: &mut Client, pg_db: &mut PgDb, db_name: &str) {
+    // Starte pg_dump
+    let child = get_pg_dump_process(db_name).unwrap(); // <-- needs catching
+    let wo = child.wait_with_output();
+    if let Err(e) = wo.as_ref() {
+        panic!("Could not start `pg_dump`: {}", e.to_string());
+    }
+
+    let output = wo.unwrap();
+    let mut sql_from_dump = "";
+    if output.status.success() {
+        sql_from_dump = std::str::from_utf8(&output.stdout).unwrap();
+    }
+    let mut tables = Tables { tables: vec![] };
+    tables.analyze(&sql_from_dump);
+
+    for t in tables.tables {
+        pg_db.add_new(
+            t.schema,
+            PgObjectType::Table,
+            t.name,
+            format!("{}\n{}", t.create_sql, t.alterations_sql),
+        );
+    }
+}
+
+fn get_pg_dump_process(db_name: &str) -> Option<std::process::Child> {
+    let args: Vec<String> = vec![
+        // "-n".to_string(), // Restrict to Schema
+        // format!("unmy_hdr from; my_hdr From: {sender}").to_string(),
+        "--quote-all-identifiers".to_string(), // Schema only
+        "-s".to_string(),                      // Schema only
+        db_name.to_string(),                   // Schema only
+                                               // format!("set realname=\"{sender_name}\"").to_string(),
+                                               // "-S".to_string(), // Username
+                                               // format!("set content_type=text/html").to_string(),
+                                               // "-t".to_string(), // Table name pattern
+                                               // format!("set content_type=text        "-s".to_string(),
+                                               // subject.to_string(),
+    ];
+
+    // attachments.iter().for_each(|att| {
+    //     args.push("-a".to_string());
+    //     args.push(att.to_owned());
+    // });
+
+    // args.push("--".to_string());
+    // args.push(recipient.to_string());
+
+    let child_raw = Command::new("pg_dump")
+        // .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .args(args)
+        .spawn()
+        .ok();
+    child_raw
 }
 
 fn analyze_types(client: &mut Client, pg_db: &mut PgDb) {

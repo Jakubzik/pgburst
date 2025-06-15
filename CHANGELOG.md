@@ -1,3 +1,9 @@
+# version 0.3.1
+
+
+- include tables and constraints, using pg_dump and analysis
+
+
 # version 0.2.6
 
 - changed default from localhost to 127.0.0.1
@@ -51,6 +57,8 @@ Fixed
 
 # Unreleased
 
+[ ] Implement help for altering tables
+[ ] Make sure comments are included in table definition
 [x] Make connection string configurable (user, host) [v0.1.2]
 [/] Add export of types [v0.2.0, no range or box types]
 [x] Add export of sequences [v0.2.1]

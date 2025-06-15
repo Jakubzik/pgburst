@@ -1,6 +1,6 @@
 # PgBurst
 
-Extract functions, views, (composite or enum) types, sequences, and triggers from your postgres database into files for editing.
+Extract tables, functions, views, (composite or enum) types, sequences, and triggers from your postgres database into files for editing.
 
 ## Introduction
 
@@ -22,7 +22,7 @@ While there are a number of excellent GUIs for editing postgres databases, they 
 
 You can
 
-- extract *all* functions, views, (composite or enum) types, sequences, and triggers, or 
+- extract *all* tables, functions, views, (composite or enum) types, sequences, and triggers, or 
 - those of selected schemas, or 
 - those whose sql definition contains a specific text
 
@@ -72,15 +72,3 @@ Options:\
 
   -w, --watch
           Watch the burst sql files *for changes* and execute them against the database (default: false). Cancel with C-c when you're done. Watching does not cover deletion or addition of files (yet?)!
-
-## Future
-
-Next steps:
-
-[x] Make connection string configurable (user, host) [v0.1.2]\
-[/] Add export of types [v0.2.0, no range or box types]\
-[x] Add export of sequences [v0.2.1]\
-[ ] Add info on sequences in comments\
-[ ] Add export of roles and privileges\
-[ ] React to deletion of files (possibly also addition of files?)
-

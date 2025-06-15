@@ -2,12 +2,12 @@
 title: PGBURST
 section: 1
 header: User Manual
-footer: pgburst 0.2.6
-date: März 12, 2025
+footer: pgburst 0.3.1
+date: Juni 15, 2025
 ---
 # NAME
 
-pgburst - tool to browse functions, views, types, sequences and triggers of a postgres database.
+pgburst - tool to browse tables, functions, views, types, sequences and triggers of a postgres database.
 
 # SYNOPSIS
 
@@ -17,7 +17,7 @@ pgburst - tool to browse functions, views, types, sequences and triggers of a po
 
 **pgburst** extracts sql-files out of your database into folders organized by schema and type (function, trigger, view, type). Editing is then executed using your own choice of tools.
 
-You can select the files you would like to extract by choosing a schema, and/or an object type (function, view, or trigger), or by simply filtering for a text in the object's sql definition.
+You can select the files you would like to extract by choosing a schema, and/or an object type (table, function, view, or trigger), or by simply filtering for a text in the object's sql definition.
 
 If invoked with the "-w" flag, **pgburst** will watch the files for changes, execute changed files against the database, and collect changes in the folder "pg_burst_skript."
 
@@ -51,7 +51,7 @@ If invoked with the "-w" flag, **pgburst** will watch the files for changes, exe
 : print version
 
 **OBJECTS_FILTER**
-: one of "function," "view," "trigger", "type," "sequence"; or a combination of those, separated by space.
+: one of "table," function," "view," "trigger", "type," "sequence"; or a combination of those, separated by space.
 
 # EXAMPLES
 **pgburst MyDb**

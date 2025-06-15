@@ -2,8 +2,8 @@
 #
 # ======================================
 # EDIT
-PROGRAMMVERSION="0.2.6" 
-MSG="Changing from 'localhost' to '127.0.0.1'" # COMMIT MSG FOR GIT
+PROGRAMMVERSION="0.3.1" 
+MSG="Include table export" # COMMIT MSG FOR GIT
 # ======================================
 
 function check_test_outcome {

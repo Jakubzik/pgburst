@@ -1,4 +1,5 @@
 use std::{fs::File, io::Write, path::PathBuf};
+pub mod dump_analyzer;
 
 use clap::ValueEnum;
 
@@ -26,6 +27,7 @@ pub enum PgObjectType {
     View,
     Type,
     Sequence,
+    Table,
     // Table,
 }
 
@@ -128,7 +130,7 @@ impl PgObjectType {
             PgObjectType::View => "view",
             PgObjectType::Type => "type",
             PgObjectType::Sequence => "sequence",
-            // PgObjectType::Table => "table",
+            PgObjectType::Table => "table",
         }
     }
 
@@ -266,6 +268,7 @@ impl PgObjectType {
                 // 88gelöscht
             }
             PgObjectType::View => "select schemaname as schema_name, viewname as obj_name, 'create or replace view \"'|| schemaname || '\".\"'|| viewname || '\" AS ' || definition as definition from pg_catalog.pg_views where schemaname not in ('pg_catalog', 'information_schema') ",
+            PgObjectType::Table => "# Objekttype table must be calculated via pgdump"
         }
     }
 }
