@@ -7,25 +7,26 @@ use crate::pg::PgObjectType;
 #[command(version)]
 #[command(author = "Heiko Jakubzik <heiko.jakubzik@shj-online.de>")]
 #[command(
-    about = "Extracts functions, views, and triggers from Postgresql databases, saves them in folders as sql-files, and (optionally) reacts to changes on those files\n",
+    about = "Extracts objects(*) from Postgresql databases, saves them in folders as sql-files, and (optionally) reacts to changes on some of those files\n
+      (*)objects are currently tables, views, functions, (composite or enum) types, sequences, and triggers.",
     long_about = "\nExample usage: 
     `pgburst MyDb`
-    exports all functions, views, and triggers into files in the folder ./MyDb/
+    exports all objects(*) into files in the folder ./MyDb/
 
     `pgburst -s public -s web_api MyDb`
-    exports all functions, views, and triggers in schema 'public' and in schema 'web_api' into files in the folder ./MyDb/
+    exports all objects(*) in schema 'public' and in schema 'web_api' into files in the folder ./MyDb/
 
     `pgburst -f login MyDb`
-    exports all functions, views, and triggers whose sql representation contains the text 'login' in ./MyDb/
+    exports all objects(*) whose sql representation contains the text 'login' in ./MyDb/
 
     `pgburst MyDb views`
     exports all views (in all schemas) to files in the folder ./MyDb/
 
     `pgburst -b ~/temp_bursts MyDb`
-    exports all functions, views, and triggers into files in the folder ~/tmp_bursts/MyDb. The folder is created if it does not yet exist.
+    exports all objects(*) into files in the folder ~/tmp_bursts/MyDb. The folder is created if it does not yet exist.
 
     `pgburst -w MyDb`
-    exports the sql files. If a file is changed, the new contents are executed against MyDb, and the folder ./MyDb/pg_burst_skript is filled with a script intended to reproduce (or undo) the effect if executed in a different environment.
+    exports the objects(*) of MyDB. If a file is changed, the new contents are executed against MyDb, and the folder ./MyDb/pg_burst_skript is filled with a script that can be used to reproduce (or undo) the commands in a different environment.
     "
 )]
 #[derive(Default)]

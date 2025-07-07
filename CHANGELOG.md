@@ -1,3 +1,7 @@
+# version 0.3.2
+
+- corrections on `watch` functionality
+
 # version 0.3.1
 
 
@@ -57,13 +61,18 @@ Fixed
 
 # Unreleased
 
-[ ] Implement help for altering tables
+[ ] Implement help for altering tables, sequences, types(?)
+[ ] Implement comments
+[ ] Improve burst_script
+   [ ] insert comment: `change function etc. ...`
+   [ ] if the same file is changed twice: what to do? (Ask if first change should be replaced)
+[ ] Export roles
 [ ] Make sure comments are included in table definition
 [x] Make connection string configurable (user, host) [v0.1.2]
 [/] Add export of types [v0.2.0, no range or box types]
 [x] Add export of sequences [v0.2.1]
 [ ] Add info for sequences as comments
-[ ] Add export of table
+[x] Add export of table
 [ ] Add update/insert scripts 
 [ ] Add mode for querying through wait mode and an open file
 [ ] Add export of roles and privileges

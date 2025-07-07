@@ -9,7 +9,7 @@ use pg::{PgDb, PgObjectType};
 use std::{
     fs::{File, OpenOptions},
     path::{Path, PathBuf},
-    time::{Instant, SystemTime, UNIX_EPOCH},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use colorize::AnsiColor;
@@ -21,6 +21,7 @@ use colorize::AnsiColor;
 /// - allow to run queries and export as markdown?
 /// - allow to run queries/updates from file
 /// @done
+/// - add tables and constraints [0.3.1]
 /// - add sequences [0.2.1]
 /// - add types [0.2.0]
 /// - make pg connect string configurable [0.1.2]
@@ -32,6 +33,7 @@ use crate::conf::BurstConf;
 
 fn main() -> Result<()> {
     let config = BurstConf::parse();
+    // panic!("Test");
 
     // the initial unchanged files are saved in a temporary folder
     // so that we can add a kind of "_undo" funcionality.
@@ -284,8 +286,12 @@ fn execute_and_document_change(
     tmp_folder: &str,
     ii: &mut usize,
 ) {
-    let content_new = std::fs::read_to_string(s_path).unwrap();
+    let content_new = match std::fs::read_to_string(s_path) {
+        Ok(content) => content,
+        Err(_) => "".to_string(),
+    };
 
+    // if !is_table(&s_path) {
     match client.execute(&content_new, &[]) {
         Ok(_msg) => {
             let s_msg = format!(
@@ -298,18 +304,42 @@ fn execute_and_document_change(
 
             println!("{}", s_msg.green());
 
-            track_change(conf, s_path, ii, tmp_folder).unwrap();
+            match track_change(conf, s_path, ii, tmp_folder) {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("Change could not be tracked: {:?}", e.to_string().red());
+                }
+            }
         }
         Err(e) => {
-            let s_info = format!(
-                "Error: {}, line: {:?}",
-                e.as_db_error().unwrap().message(),
-                e.as_db_error().unwrap().line()
-            );
-
+            let s_info = match e.as_db_error() {
+                Some(e) => format!("Error: {}, line: {:?}", e.message(), e.line()),
+                None => "(No info)".to_string(),
+            };
             println!("{}", s_info.red());
         }
     }
+    // } else {
+    //     let s_msg = "Ok -- alteration of table >{}< on >{}< is tracked. Please note, though, that alterations on tables are not executed!";
+    //     println!("{}", s_msg.yellow());
+    //     track_change(conf, s_path, ii, tmp_folder).unwrap();
+    // }
+}
+
+// Deprecated -- needs more thought.
+fn is_table(s_path: &std::path::PathBuf) -> bool {
+    println!("{:?}", s_path);
+    println!(
+        "{}",
+        format!(
+            "/tables/{}.sql",
+            s_path.file_stem().unwrap().to_string_lossy()
+        )
+    );
+    s_path.to_string_lossy().ends_with(&format!(
+        "/tables/{}.sql",
+        s_path.file_stem().unwrap().to_string_lossy()
+    ))
 }
 
 fn track_change(
@@ -415,32 +445,41 @@ fn watch(
     )?;
 
     let mut i_count: usize = 1;
-    let mut start = Instant::now();
 
     for res in rx {
         match res {
             Ok(event) => {
-                if event.kind.is_modify() {
-                    // print!("{} Pfad: {:?}", start.elapsed().as_millis(), event.paths);
-                    watcher.watch(&event.paths[0], RecursiveMode::NonRecursive)?;
-                    // First try: There always seems to be one modification
-                    // followed by several others in 0 ms distance.
-                    // Is the first one sufficient? Yes, seems so.
-                    if start.elapsed().as_millis() > 10 {
-                        execute_and_document_change(
-                            client,
-                            conf,
-                            &event.paths[0],
-                            tmp_folder,
-                            &mut i_count,
-                        );
-                        i_count += 1;
+                let mut is_data_change: bool = false;
+                let ev_kind = event.kind;
+                match ev_kind {
+                    notify::EventKind::Modify(modify_kind) => {
+                        if modify_kind
+                            == notify::event::ModifyKind::Data(notify::event::DataChange::Any)
+                        {
+                            println!("Modified: {:?}", ev_kind);
+                            is_data_change = true;
+                        }
                     }
-                    start = Instant::now();
+                    // e.g. vim replaces the file, it seems, which
+                    // implies that it is removed at some point;
+                    notify::EventKind::Remove(_) => {
+                        println!("Removed: {:?}", ev_kind);
+                        watcher.watch(&event.paths[0], RecursiveMode::NonRecursive)?;
+                        is_data_change = true;
+                    }
+                    _ => {}
                 }
-                // print!("Change: {event:?}");
+                if is_data_change {
+                    execute_and_document_change(
+                        client,
+                        conf,
+                        &event.paths[0],
+                        tmp_folder,
+                        &mut i_count,
+                    );
+                }
             }
-            Err(error) => print!("Error: {error:?}"),
+            Err(error) => print!("Error (event): {error:?}"),
         }
     }
 
