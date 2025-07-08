@@ -1,0 +1,7 @@
+Package: pgburst
+Version: #PROGRAMMVERSION#
+Section: utils
+Priority: optional
+Architecture: all
+Maintainer: Heiko Jakubzik <heiko.jakubzik@shj-online.de>
+Description: pgburst - tool to browse tables, functions, views, types, sequences and triggers of a postgres database.

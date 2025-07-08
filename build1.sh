@@ -110,4 +110,6 @@ echo
 echo
 sleep 3
 
+echo "Trage Programmversion in debian-control-file ein."
+sed -i -e "s/#PROGRAMMVERSION#/$PROGRAMMVERSION/g" "./debian_control" 
 echo "OK, you can start Git Hub release (build2)"
