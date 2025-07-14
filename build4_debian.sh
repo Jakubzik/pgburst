@@ -1,12 +1,15 @@
 #!/bin/bash
 
+PROGRAMMVERSION=0.3.3
 dbian_folder=/home/heiko/development/pg_burst_debian/pgburst
 
 # Copy current binary
 cp ./target/x86_64-unknown-linux-musl/release/pgburst "$dbian_folder/bin/"
 
 # Copy control file containing the updated version number
-cp ./debian_control "$dbian_folder/DEBIAN/control"
+sed -e "s/#PROGRAMMVERSION#/$PROGRAMMVERSION/g" "./debian_control" > "$dbian_folder/DEBIAN/control"
+
+# cp ./debian_control "$dbian_folder/DEBIAN/control"
 
 # Copy License (copyright)
 cp ./LICENSE.md $dbian_folder/usr/share/doc/pgburst/copyright

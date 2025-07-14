@@ -1,3 +1,9 @@
+# version 0.3.3
+
+- reorganization of code to make room for improved watching
+
+- improved script to help transfer the commands to a new machine when files are changed more than once.
+
 # version 0.3.2
 
 - corrections on `watch` functionality
@@ -63,6 +69,7 @@ Fixed
 
 [ ] Implement help for altering tables, sequences, types(?)
 [ ] Implement comments
+[x] Make script log multiple changes of the same file [v0.3.3]
 [ ] Improve burst_script
    [ ] insert comment: `change function etc. ...`
    [ ] if the same file is changed twice: what to do? (Ask if first change should be replaced)

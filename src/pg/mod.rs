@@ -5,22 +5,29 @@ use clap::ValueEnum;
 
 use crate::BurstConf;
 
+#[derive(Clone, Debug)]
 pub struct PgObject {
     pub pg_type: PgObjectType,
     pub name: String,
     pub definition: String,
+    pub number_of_changes: usize,
 }
+
 pub struct PgDb {
     pub name: String,
     pub schemas: Vec<PgSchema>,
+    pub base_folder: String,
+    pub tmp_folder: String,
 }
 
+// pub struct PgSchema<'a> {
 pub struct PgSchema {
     pub name: String,
+    // pub pg_objects: Vec<&'a mut PgObject>,
     pub pg_objects: Vec<PgObject>,
 }
 
-#[derive(Clone, Copy, PartialEq, ValueEnum)]
+#[derive(Clone, Copy, PartialEq, ValueEnum, Debug)]
 pub enum PgObjectType {
     Function,
     Trigger,
@@ -28,7 +35,16 @@ pub enum PgObjectType {
     Type,
     Sequence,
     Table,
-    // Table,
+}
+
+impl PgObject {
+    // We need to keep track of the changes that
+    // are commited so we have unique filenames
+    // for these iterations in the `burst_skript`
+    // folder
+    pub fn increase_number_of_changes(&mut self) {
+        self.number_of_changes += 1;
+    }
 }
 
 impl PgDb {
@@ -38,8 +54,19 @@ impl PgDb {
     /// @param tmp_folder stores original sql-files to enable UNDO-functionality.
     /// @returns a list of these files so that they can be
     /// monitored for changes (option 'watch').
-    pub fn burst(self, conf: &BurstConf, tmp_folder: &str) -> Result<Vec<PathBuf>, std::io::Error> {
-        let mut base_folder; // Utility
+    // pub fn burst(self, conf: &BurstConf, tmp_folder: &str) -> Result<Vec<PathBuf>, std::io::Error> {
+    pub fn burst(
+        &mut self,
+        conf: &BurstConf,
+        tmp_folder: &str,
+    ) -> Result<Vec<PathBuf>, std::io::Error> {
+        self.base_folder = conf
+            .burst_folder
+            .as_ref()
+            .unwrap_or(&".".to_string())
+            .clone();
+
+        self.tmp_folder = tmp_folder.to_string();
         let mut file_paths: Vec<PathBuf> = vec![];
 
         for i in 0..self.schemas.len() {
@@ -51,9 +78,9 @@ impl PgDb {
                     .contains(&self.schemas[i].name)
             {
                 for j in 0..self.schemas[i].pg_objects.len() {
-                    base_folder = format!(
+                    let base_folder = format!(
                         "{}/{}/{}/{}s",
-                        conf.burst_folder.as_ref().unwrap_or(&".".to_string()),
+                        self.base_folder,
                         self.name,
                         self.schemas[i].name,
                         &self.schemas[i].pg_objects[j].pg_type.as_string()
@@ -63,7 +90,7 @@ impl PgDb {
                     // undo-functionality when files are altered.
                     let tmp_folder_spec = format!(
                         "{}/{}/{}/{}s",
-                        tmp_folder,
+                        self.tmp_folder,
                         self.name,
                         &self.schemas[i].name,
                         &self.schemas[i].pg_objects[j].pg_type.as_string()
@@ -74,8 +101,10 @@ impl PgDb {
                             &base_folder,
                             false,
                             &self.schemas[i].pg_objects[j],
+                            // &mut pg_objects,
                             &mut file_paths,
                         )?;
+
                         write_sql(
                             &tmp_folder_spec,
                             true,
@@ -89,6 +118,68 @@ impl PgDb {
         Ok(file_paths)
     }
 
+    // We want to get the object to increase its
+    // changes-counter (so that we can track multiple
+    // changes of the same file).
+    //
+    // .get_object identifies the object using its path. The path
+    // ends in:
+    //
+    // `db_name/schema/type/object_name.sql`
+    //
+    // This can be used to identify the corresponding
+    // object schema[name].type[name].object[name_without_.sql]
+    pub fn get_object(&mut self, s_path: &PathBuf) -> Option<&mut PgObject> {
+        let mut b_is_component_of_db = false;
+        let mut c_schema = "";
+        let mut c_plural_of_type; // = "".to_string();
+        let mut c_type_clean = "".to_string();
+        let mut c_name = "";
+
+        // We're looping the path components until
+        // we reach the db_name (b_is_component is set to `true`),
+        // then we set the type,
+        // and then the name.
+        for component in s_path.components() {
+            if b_is_component_of_db {
+                // 1st is the schema,
+                if c_schema.is_empty() {
+                    c_schema = component.as_os_str().to_str().unwrap();
+                } else {
+                    // 2nd is the type
+                    if c_type_clean.is_empty() {
+                        // Paths of types are in the plural,
+                        // db_name/tableS, db_name/functionS etc.,
+                        // so we .pop() this part of the path:
+                        c_plural_of_type = component.as_os_str().to_string_lossy().to_string();
+                        c_plural_of_type.pop();
+                        c_type_clean = c_plural_of_type.to_lowercase();
+                    } else {
+                        // last one is the name
+                        c_name = component.as_os_str().to_str().unwrap();
+                    }
+                }
+            }
+            if component.as_os_str().to_string_lossy() == self.name {
+                b_is_component_of_db = true;
+            }
+        }
+
+        let mut obj: Option<&mut PgObject> = None;
+
+        if let Some(schema) = self
+            .schemas
+            .iter_mut()
+            .find(|schema| schema.name == c_schema)
+        {
+            obj = schema.pg_objects.iter_mut().find(|p_obj| {
+                p_obj.name == c_name[0..c_name.len() - 4]
+                    && p_obj.pg_type.as_string().to_lowercase() == c_type_clean
+            });
+        }
+        obj
+    }
+
     pub fn add_new(
         &mut self,
         schema: String,
@@ -97,23 +188,33 @@ impl PgDb {
         f_def: String,
     ) {
         // Is this a schema we already know?
-        let mut b_found = false;
+        let mut b_schema_already_known = false;
+        let obj = PgObject {
+            pg_type: pg_object_type,
+            name: pg_object_name,
+            definition: f_def,
+            number_of_changes: 0,
+        };
+
+        // Add the object to the schema, if there already
+        // is a schema ...
         for i in 0..self.schemas.len() {
             if self.schemas[i].name == schema {
-                b_found = true;
-                self.schemas[i].pg_objects.push(PgObject {
-                    pg_type: pg_object_type,
-                    name: pg_object_name.clone(),
-                    definition: f_def.clone(),
-                });
+                b_schema_already_known = true;
+                self.schemas[i].pg_objects.push(obj.clone());
             }
         }
-        if !b_found {
-            let v: Vec<PgObject> = vec![PgObject {
-                pg_type: pg_object_type,
-                name: pg_object_name,
-                definition: f_def,
-            }];
+
+        // ... or, if there's no schema yet, create
+        // the schema and add the object
+        if !b_schema_already_known {
+            let mut v: Vec<PgObject> = vec![];
+            v.push(obj);
+            // let v: Vec<&mut PgObject> = vec![PgObject {
+            //     pg_type: pg_object_type,
+            //     name: pg_object_name,
+            //     definition: f_def,
+            // }];
             self.schemas.push(PgSchema {
                 name: schema,
                 pg_objects: v,
@@ -306,6 +407,7 @@ fn write_sql(
     is_tmp: bool,
     pg_object: &PgObject,
     v_return: &mut Vec<PathBuf>,
+    // v_return: &mut Vec<PgObject>,
 ) -> Result<(), std::io::Error> {
     // std::fs::create_dir_all(folder.clone())?;
     std::fs::create_dir_all(folder.clone())?;

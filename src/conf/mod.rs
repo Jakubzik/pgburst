@@ -44,7 +44,7 @@ pub struct BurstConf {
     pub(crate) pg_host: String,
 
     /// Where to store the sql files. (Default is .)
-    #[arg(short, long)]
+    #[arg(short, long, default_value = ".")]
     pub(crate) burst_folder: Option<String>,
 
     /// Only export items of this schema or list of schemas (option can be used repeatedly to export more than one schema).

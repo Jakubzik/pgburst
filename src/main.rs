@@ -1,16 +1,14 @@
 use clap::Parser;
-pub(crate) use std::{io::Write, process::Command};
+pub(crate) use std::process::Command;
 
 mod conf;
 mod pg;
+mod watch;
 use crate::pg::dump_analyzer::Tables;
+use watch::watch;
 
 use pg::{PgDb, PgObjectType};
-use std::{
-    fs::{File, OpenOptions},
-    path::{Path, PathBuf},
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use colorize::AnsiColor;
 
@@ -26,7 +24,7 @@ use colorize::AnsiColor;
 /// - add types [0.2.0]
 /// - make pg connect string configurable [0.1.2]
 /// - FIX: schema ap_tests with fn tests does not come through [0.1.3]
-use notify::{Config, RecommendedWatcher, RecursiveMode, Result, Watcher};
+use notify::Result;
 use postgres::{Client, NoTls};
 
 use crate::conf::BurstConf;
@@ -53,6 +51,8 @@ fn main() -> Result<()> {
     let mut pg_db = PgDb {
         name: db_name.clone(),
         schemas: vec![],
+        base_folder: config.burst_folder.as_ref().unwrap().clone(),
+        tmp_folder: tmp_folder.clone(),
     };
 
     let mut client = match Client::connect(
@@ -109,7 +109,7 @@ fn main() -> Result<()> {
 
     // Should we watch for changes in files?
     if config.watch {
-        watch(&config, &mut client, &files, &tmp_folder)?;
+        watch(&mut pg_db, &config, &mut client, &files, &tmp_folder)?;
     }
 
     Ok(())
@@ -279,52 +279,53 @@ fn analyze_types(client: &mut Client, pg_db: &mut PgDb) {
         fdef.clone(),
     );
 }
-fn execute_and_document_change(
-    client: &mut Client,
-    conf: &BurstConf,
-    s_path: &std::path::PathBuf,
-    tmp_folder: &str,
-    ii: &mut usize,
-) {
-    let content_new = match std::fs::read_to_string(s_path) {
-        Ok(content) => content,
-        Err(_) => "".to_string(),
-    };
 
-    // if !is_table(&s_path) {
-    match client.execute(&content_new, &[]) {
-        Ok(_msg) => {
-            let s_msg = format!(
-                "Ok -- >{}< executed against >{}< on >{}< (as user >{}<)",
-                s_path.file_stem().unwrap().to_string_lossy(),
-                conf.db_name,
-                conf.pg_host,
-                conf.pg_user,
-            );
+// fn execute_and_document_change(
+//     client: &mut Client,
+//     conf: &BurstConf,
+//     s_path: &std::path::PathBuf,
+//     tmp_folder: &str,
+//     ii: &mut usize,
+// ) {
+//     let content_new = match std::fs::read_to_string(s_path) {
+//         Ok(content) => content,
+//         Err(_) => "".to_string(),
+//     };
 
-            println!("{}", s_msg.green());
+//     // if !is_table(&s_path) {
+//     match client.execute(&content_new, &[]) {
+//         Ok(_msg) => {
+//             let s_msg = format!(
+//                 "Ok -- >{}< executed against >{}< on >{}< (as user >{}<)",
+//                 s_path.file_stem().unwrap().to_string_lossy(),
+//                 conf.db_name,
+//                 conf.pg_host,
+//                 conf.pg_user,
+//             );
 
-            match track_change(conf, s_path, ii, tmp_folder) {
-                Ok(_) => {}
-                Err(e) => {
-                    println!("Change could not be tracked: {:?}", e.to_string().red());
-                }
-            }
-        }
-        Err(e) => {
-            let s_info = match e.as_db_error() {
-                Some(e) => format!("Error: {}, line: {:?}", e.message(), e.line()),
-                None => "(No info)".to_string(),
-            };
-            println!("{}", s_info.red());
-        }
-    }
-    // } else {
-    //     let s_msg = "Ok -- alteration of table >{}< on >{}< is tracked. Please note, though, that alterations on tables are not executed!";
-    //     println!("{}", s_msg.yellow());
-    //     track_change(conf, s_path, ii, tmp_folder).unwrap();
-    // }
-}
+//             println!("{}", s_msg.green());
+
+//             match track_change(conf, s_path, ii, tmp_folder) {
+//                 Ok(_) => {}
+//                 Err(e) => {
+//                     println!("Change could not be tracked: {:?}", e.to_string().red());
+//                 }
+//             }
+//         }
+//         Err(e) => {
+//             let s_info = match e.as_db_error() {
+//                 Some(e) => format!("Error: {}, line: {:?}", e.message(), e.line()),
+//                 None => "(No info)".to_string(),
+//             };
+//             println!("{}", s_info.red());
+//         }
+//     }
+//     // } else {
+//     //     let s_msg = "Ok -- alteration of table >{}< on >{}< is tracked. Please note, though, that alterations on tables are not executed!";
+//     //     println!("{}", s_msg.yellow());
+//     //     track_change(conf, s_path, ii, tmp_folder).unwrap();
+//     // }
+// }
 
 // Deprecated -- needs more thought.
 fn is_table(s_path: &std::path::PathBuf) -> bool {
@@ -342,146 +343,146 @@ fn is_table(s_path: &std::path::PathBuf) -> bool {
     ))
 }
 
-fn track_change(
-    conf: &BurstConf,
-    s_path: &std::path::PathBuf,
-    ii: &mut usize,
-    tmp_folder: &str,
-) -> Result<()> {
-    let sql_alterations_folder = format!(
-        "{}/{}/pg_burst_skript/",
-        conf.burst_folder.as_ref().unwrap_or(&".".to_string()),
-        conf.db_name
-    );
+// fn track_change(
+//     conf: &BurstConf,
+//     s_path: &std::path::PathBuf,
+//     ii: &mut usize,
+//     tmp_folder: &str,
+// ) -> Result<()> {
+//     let sql_alterations_folder = format!(
+//         "{}/{}/pg_burst_skript/",
+//         conf.burst_folder.as_ref().unwrap_or(&".".to_string()),
+//         conf.db_name
+//     );
 
-    let mut batch = OpenOptions::new()
-        .append(true)
-        .open(format!("{}/apply_changes.sh", sql_alterations_folder))?;
+//     let mut batch = OpenOptions::new()
+//         .append(true)
+//         .open(format!("{}/apply_changes.sh", sql_alterations_folder))?;
 
-    let mut batch_undo = OpenOptions::new()
-        .append(true)
-        .open(format!("{}/apply_changes_UNDO.sh", sql_alterations_folder))?;
+//     let mut batch_undo = OpenOptions::new()
+//         .append(true)
+//         .open(format!("{}/apply_changes_UNDO.sh", sql_alterations_folder))?;
 
-    let s_file_stem = s_path.file_stem().unwrap_or_default().to_string_lossy();
-    let new_filename = format!("{}_{}.sql", ii, s_file_stem);
-    let undo_filename = format!("{}_{}_UNDO.sql", ii, s_file_stem);
+//     let s_file_stem = s_path.file_stem().unwrap_or_default().to_string_lossy();
+//     let new_filename = format!("{}_{}.sql", ii, s_file_stem);
+//     let undo_filename = format!("{}_{}_UNDO.sql", ii, s_file_stem);
 
-    batch.write_all(
-        format!(
-            "\npsql -U {} -h {} {} < $BURST_FOLDER/{}",
-            conf.pg_user, conf.pg_host, conf.db_name, new_filename
-        )
-        .as_bytes(),
-    )?;
+//     batch.write_all(
+//         format!(
+//             "\npsql -U {} -h {} {} < $BURST_FOLDER/{}",
+//             conf.pg_user, conf.pg_host, conf.db_name, new_filename
+//         )
+//         .as_bytes(),
+//     )?;
 
-    batch_undo.write_all(
-        format!(
-            "\npsql -U {} -h {} {} < $BURST_FOLDER/{}",
-            conf.pg_user, conf.pg_host, conf.db_name, undo_filename
-        )
-        .as_bytes(),
-    )?;
+//     batch_undo.write_all(
+//         format!(
+//             "\npsql -U {} -h {} {} < $BURST_FOLDER/{}",
+//             conf.pg_user, conf.pg_host, conf.db_name, undo_filename
+//         )
+//         .as_bytes(),
+//     )?;
 
-    let s1 = s_path.as_path().to_str().unwrap().to_string();
-    let rel_link = &s1[s1.find(&conf.db_name).unwrap()..s1.rfind('/').unwrap()].to_string();
+//     let s1 = s_path.as_path().to_str().unwrap().to_string();
+//     let rel_link = &s1[s1.find(&conf.db_name).unwrap()..s1.rfind('/').unwrap()].to_string();
 
-    let new_file = format!("{}/{}", sql_alterations_folder, new_filename);
-    let undo_file = format!("{}/{}", sql_alterations_folder, undo_filename);
+//     let new_file = format!("{}/{}", sql_alterations_folder, new_filename);
+//     let undo_file = format!("{}/{}", sql_alterations_folder, undo_filename);
 
-    // println!("Alteration folder: {sql_alterations_folder}");
+//     // println!("Alteration folder: {sql_alterations_folder}");
 
-    std::fs::copy(s_path, new_file)?;
-    let s_tmp = format!("{}/{}/{}_undo.sql", tmp_folder, rel_link, s_file_stem);
+//     std::fs::copy(s_path, new_file)?;
+//     let s_tmp = format!("{}/{}/{}_undo.sql", tmp_folder, rel_link, s_file_stem);
 
-    std::fs::copy(s_tmp, undo_file)?;
-    Ok(())
-}
+//     std::fs::copy(s_tmp, undo_file)?;
+//     Ok(())
+// }
 
-fn watch(
-    conf: &BurstConf,
-    client: &mut Client,
-    files: &Vec<PathBuf>,
-    tmp_folder: &str,
-) -> notify::Result<()> {
-    let (tx, rx) = std::sync::mpsc::channel();
+// fn watch(
+//     conf: &BurstConf,
+//     client: &mut Client,
+//     files: &Vec<PathBuf>,
+//     tmp_folder: &str,
+// ) -> notify::Result<()> {
+//     let (tx, rx) = std::sync::mpsc::channel();
 
-    // Automatically select the best implementation for your platform.
-    // You can also access each implementation directly e.g. INotifyWatcher.
-    let mut watcher = RecommendedWatcher::new(tx, Config::default())?;
+//     // Automatically select the best implementation for your platform.
+//     // You can also access each implementation directly e.g. INotifyWatcher.
+//     let mut watcher = RecommendedWatcher::new(tx, Config::default())?;
 
-    // Add a path to be watched. All files and directories at that path and
-    // below will be monitored for changes.
-    for f in files {
-        watcher.watch(Path::new(&f), RecursiveMode::NonRecursive)?;
-    }
+//     // Add a path to be watched. All files and directories at that path and
+//     // below will be monitored for changes.
+//     for f in files {
+//         watcher.watch(Path::new(&f), RecursiveMode::NonRecursive)?;
+//     }
 
-    // Create skript folder and bash files
-    let sql_alterations_folder = format!(
-        "{}/{}/pg_burst_skript/",
-        conf.burst_folder.as_ref().unwrap_or(&".".to_string()),
-        conf.db_name
-    );
+//     // Create skript folder and bash files
+//     let sql_alterations_folder = format!(
+//         "{}/{}/pg_burst_skript/",
+//         conf.burst_folder.as_ref().unwrap_or(&".".to_string()),
+//         conf.db_name
+//     );
 
-    std::fs::create_dir_all(&sql_alterations_folder)?;
+//     std::fs::create_dir_all(&sql_alterations_folder)?;
 
-    let mut f_do = File::create(format!("{}/apply_changes.sh", sql_alterations_folder))?;
+//     let mut f_do = File::create(format!("{}/apply_changes.sh", sql_alterations_folder))?;
 
-    let mut f_undo = File::create(format!("{}/apply_changes_UNDO.sh", sql_alterations_folder))?;
+//     let mut f_undo = File::create(format!("{}/apply_changes_UNDO.sh", sql_alterations_folder))?;
 
-    f_do.write_all(
-        format!(
-            "#!/bin/bash\n\nBURST_FOLDER=\"{}\"\n\n",
-            sql_alterations_folder
-        )
-        .as_bytes(),
-    )?;
+//     f_do.write_all(
+//         format!(
+//             "#!/bin/bash\n\nBURST_FOLDER=\"{}\"\n\n",
+//             sql_alterations_folder
+//         )
+//         .as_bytes(),
+//     )?;
 
-    f_undo.write_all(
-        format!(
-            "#!/bin/bash\n\nBURST_FOLDER=\"{}\"\n\n",
-            sql_alterations_folder
-        )
-        .as_bytes(),
-    )?;
+//     f_undo.write_all(
+//         format!(
+//             "#!/bin/bash\n\nBURST_FOLDER=\"{}\"\n\n",
+//             sql_alterations_folder
+//         )
+//         .as_bytes(),
+//     )?;
 
-    let mut i_count: usize = 1;
+//     let mut i_count: usize = 1;
 
-    for res in rx {
-        match res {
-            Ok(event) => {
-                let mut is_data_change: bool = false;
-                let ev_kind = event.kind;
-                match ev_kind {
-                    notify::EventKind::Modify(modify_kind) => {
-                        if modify_kind
-                            == notify::event::ModifyKind::Data(notify::event::DataChange::Any)
-                        {
-                            println!("Modified: {:?}", ev_kind);
-                            is_data_change = true;
-                        }
-                    }
-                    // e.g. vim replaces the file, it seems, which
-                    // implies that it is removed at some point;
-                    notify::EventKind::Remove(_) => {
-                        println!("Removed: {:?}", ev_kind);
-                        watcher.watch(&event.paths[0], RecursiveMode::NonRecursive)?;
-                        is_data_change = true;
-                    }
-                    _ => {}
-                }
-                if is_data_change {
-                    execute_and_document_change(
-                        client,
-                        conf,
-                        &event.paths[0],
-                        tmp_folder,
-                        &mut i_count,
-                    );
-                }
-            }
-            Err(error) => print!("Error (event): {error:?}"),
-        }
-    }
+//     for res in rx {
+//         match res {
+//             Ok(event) => {
+//                 let mut is_data_change: bool = false;
+//                 let ev_kind = event.kind;
+//                 match ev_kind {
+//                     notify::EventKind::Modify(modify_kind) => {
+//                         if modify_kind
+//                             == notify::event::ModifyKind::Data(notify::event::DataChange::Any)
+//                         {
+//                             println!("Modified: {:?}", ev_kind);
+//                             is_data_change = true;
+//                         }
+//                     }
+//                     // e.g. vim replaces the file, it seems, which
+//                     // implies that it is removed at some point;
+//                     notify::EventKind::Remove(_) => {
+//                         println!("Removed: {:?}", ev_kind);
+//                         watcher.watch(&event.paths[0], RecursiveMode::NonRecursive)?;
+//                         is_data_change = true;
+//                     }
+//                     _ => {}
+//                 }
+//                 if is_data_change {
+//                     execute_and_document_change(
+//                         client,
+//                         conf,
+//                         &event.paths[0],
+//                         tmp_folder,
+//                         &mut i_count,
+//                     );
+//                 }
+//             }
+//             Err(error) => print!("Error (event): {error:?}"),
+//         }
+//     }
 
-    Ok(())
-}
+//     Ok(())
+// }
