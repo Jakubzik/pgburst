@@ -2,7 +2,7 @@
 #
 # ======================================
 # EDIT
-PROGRAMMVERSION="0.3.2" 
+PROGRAMMVERSION="0.3.3" 
 MSG="Include table export" # COMMIT MSG FOR GIT
 # ======================================
 
